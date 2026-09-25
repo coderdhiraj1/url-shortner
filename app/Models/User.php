@@ -10,6 +10,8 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 
 use App\Enums\Role;
 
@@ -33,6 +35,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'company_id'
     ];
 
     /**
@@ -83,5 +87,15 @@ class User extends Authenticatable
     public function isMember(): bool
     {
         return $this->role === Role::MEMBER;
+    }
+
+    public function sentInvitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class, 'invited_by');
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 }
