@@ -32,7 +32,6 @@ class DashboardController extends Controller
                 ->get();
             $shortUrls = ShortUrl::with(['company', 'creator'])
                 ->filterByDate($filter)
-                ->latest()
                 ->get();
         }
 
@@ -45,7 +44,6 @@ class DashboardController extends Controller
             $shortUrls = ShortUrl::with('creator')
                 ->where('company_id', $user->company_id)
                 ->filterByDate($filter)
-                ->latest()
                 ->get();
         }
 
@@ -54,7 +52,6 @@ class DashboardController extends Controller
                 ->where('company_id', $user->company_id)
                 ->where('created_by', $user->id)
                 ->filterByDate($filter)
-                ->latest()
                 ->get();
         }
 

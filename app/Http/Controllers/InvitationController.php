@@ -15,14 +15,20 @@ class InvitationController extends Controller
     public function store(StoreInvitationRequest $request, InvitationService $invitationService ): RedirectResponse 
     {
         $this->authorize('create', Invitation::class);
-        $invitationService->create(
+        $invitation = $invitationService->create(
             $request->user(),
             $request->string('email')->toString(),
             Role::from($request->string('role')->toString()),
             $request->input('company_name')
         );
 
-        return back()->with('success', 'Invitation sent successfully.');
+        $msg = 'Invitation sent successfully.';
+        if(config('mail.default') === 'log'){
+            $url = route('invitations.accept', $invitation->token);
+            $msg = "Invitation sent successfully. ". '<a href="#" onclick="navigator.clipboard.writeText(\'' . $url . '\'); return false;" '. 'class="text-indigo-600 underline font-medium">'. 'Click to copy invitation URL'. '</a>';
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function create(): View

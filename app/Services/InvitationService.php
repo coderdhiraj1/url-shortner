@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Mail\InvitationMail;
+use Illuminate\Support\Facades\Mail;
 
 class InvitationService
 {
@@ -69,7 +71,9 @@ class InvitationService
                 }
             }
 
-            return Invitation::create([
+
+
+            $invitation =  Invitation::create([
                 'company_id' => $companyId,
                 'invited_by' => $inviter->id,
                 'email' => $email,
@@ -77,6 +81,13 @@ class InvitationService
                 'token' => Str::random(64),
                 'expires_at' => now()->addDays(7),
             ]);
+
+            if (config('mail.default') === 'smtp' && config('mail.mailers.smtp.host')) {
+                $invitation->load('company');
+                Mail::to($invitation->email)->send(new InvitationMail($invitation));
+            }
+
+            return $invitation;
         });
     }
 }

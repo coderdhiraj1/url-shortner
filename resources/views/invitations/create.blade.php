@@ -13,7 +13,7 @@
 
                 @if (session('success'))
                     <div class="mb-4 p-4 bg-green-100 text-green-700 rounded">
-                        {{ session('success') }}
+                        {!! session('success') !!}
                     </div>
                 @endif
 
@@ -88,6 +88,19 @@
                     </button>
 
                 </form>
+
+
+                @if (config('mail.default') === 'log')
+                    <br>
+                    <div class="mb-5 rounded-md bg-yellow-50 p-4">
+                        <p class="text-sm font-medium text-yellow-800">
+                            Note: <span class="text-red-600">Email service is not configured.</span>
+                        </p>
+                        <p class="mt-1 text-sm text-yellow-700">
+                            No invitation email will be sent. Update your <i>.env</i> to send an email on invite.
+                        </p>
+                    </div>
+                @endif
 
             </div>
         </div>
