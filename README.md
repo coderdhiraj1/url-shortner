@@ -86,16 +86,7 @@ Email: superadmin@example.com
 Password: 12345
 ```
 
-
-### 8. Build frontend assets
-
-```bash
-npm install
-npm run build
-```
-
-
-### 9. Build frontend assets
+### 8. Run application
 
 ```bash
 php artisan serve
