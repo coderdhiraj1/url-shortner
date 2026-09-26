@@ -85,6 +85,11 @@ Default Superadmin Login Credentials
 Email: superadmin@example.com
 Password: 12345
 ```
+### 8. Build frontend assets
+
+```bash
+npm run build
+```
 
 ### 8. Run application
 
@@ -93,3 +98,15 @@ php artisan serve
 ```
 
 Congratulation application will be running at http://127.0.0.1:8000
+
+## AI usages declaration
+Used ChatGPT for below purpose:
+- Basic forms design, dashboard ui structure and table layouts.
+- Resolving relationship/model error while implementing overall couting of client.
+- Tailwind css classes use case clarification.
+
+
+
+## README Credits
+
+This README was created and structured using [readme.so](https://readme.so/).
