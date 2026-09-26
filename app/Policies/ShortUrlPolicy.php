@@ -2,13 +2,13 @@
 
 namespace App\Policies;
 
-use App\Models\Invitation;
+use App\Models\ShortUrl;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
 use App\Enums\Role;
 
-class InvitationPolicy
+class ShortUrlPolicy
 {
     /**
      * Determine whether the user can view any models.
@@ -21,7 +21,7 @@ class InvitationPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Invitation $invitation): bool
+    public function view(User $user, ShortUrl $shortUrl): bool
     {
         return false;
     }
@@ -31,17 +31,16 @@ class InvitationPolicy
      */
     public function create(User $user): bool
     {
-        return true;
         return in_array($user->role, [
-            Role::SUPER_ADMIN,
             Role::ADMIN,
-        ]);
+            Role::MEMBER,
+        ], true);
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Invitation $invitation): bool
+    public function update(User $user, ShortUrl $shortUrl): bool
     {
         return false;
     }
@@ -49,7 +48,7 @@ class InvitationPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Invitation $invitation): bool
+    public function delete(User $user, ShortUrl $shortUrl): bool
     {
         return false;
     }
@@ -57,7 +56,7 @@ class InvitationPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Invitation $invitation): bool
+    public function restore(User $user, ShortUrl $shortUrl): bool
     {
         return false;
     }
@@ -65,7 +64,7 @@ class InvitationPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Invitation $invitation): bool
+    public function forceDelete(User $user, ShortUrl $shortUrl): bool
     {
         return false;
     }

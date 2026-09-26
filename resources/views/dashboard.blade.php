@@ -1,7 +1,20 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Dashboard') }}
+            @if (!auth()->user()->isSuperAdmin() && auth()->user()->company)
+            <span class="text-sm text-gray-500">
+                ({{ auth()->user()->company->name }})
+            </span>
+            @endif
+            @if(auth()->user()->isSuperAdmin())
+            <span class="text-sm text-gray-500">
+                (Superadmin)
+            </span>
+            @endif
         </h2>
     </x-slot>
 
@@ -55,7 +68,7 @@
 
                             <tbody class="divide-y divide-gray-200">
 
-                                @forelse ($companies as $index => $company)
+                                @forelse ($companies->take(config('pagination.dashboard_limit')) as $index => $company)
                                     <tr class="hover:bg-gray-50">
 
                                         <td class="px-6 py-4 text-sm text-gray-700">
@@ -64,6 +77,8 @@
 
                                         <td class="px-6 py-4 text-sm text-gray-700">
                                             {{ $company->name }}
+                                            <br>
+                                            <small>({{ $company->invitations->first()?->email ?? '-' }})</small>
                                         </td>
 
                                         <td class="px-6 py-4 text-sm text-gray-700">
@@ -71,11 +86,11 @@
                                         </td>
 
                                         <td class="px-6 py-4 text-sm text-gray-700">
-                                            0
+                                            {{ $company->short_urls_count }}
                                         </td>
 
                                         <td class="px-6 py-4 text-sm text-gray-700">
-                                            0
+                                            {{ $company->short_urls_sum_hits ?? 0 }}
                                         </td>
 
                                     </tr>
@@ -89,6 +104,23 @@
 
                             </tbody>
                         </table>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <p class="text-sm text-gray-500">
+                                Showing {{ min(config('pagination.dashboard_limit'), $companies->count()) }}
+                                of {{ $companies->count() }} clients
+                            </p>
+
+                            @if ($companies->count() > config('pagination.dashboard_limit'))
+                                <a
+                                    href="{{ route('companies.index') }}"
+                                    class="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                >
+                                    View All
+                                </a>
+                            @endif
+                        </div>
+
                     </div>
 
                 </div>
@@ -112,24 +144,65 @@
                             </p>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <select
-                                class="rounded-md border-gray-300 text-sm
-                                    focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                <option>This Month</option>
-                                <option>Last Month</option>
-                                <option>Last Week</option>
-                                <option>Today</option>
-                            </select>
+                        @if (auth()->user()->isAdmin() || auth()->user()->isMember())
+                        <a href="{{ route('short-urls.create') }}" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
+                            Create Short URL
+                        </a>
+                        @endif
 
-                            <button
-                                type="button"
-                                class="px-4 py-2 bg-indigo-600 text-white text-sm
-                                    font-medium rounded-md hover:bg-indigo-700"
+
+
+                        <div class="flex items-center gap-3">
+                            <form
+                                method="GET"
+                                action="{{ route('dashboard') }}"
+                                class="flex items-center gap-3"
                             >
-                                Download
-                            </button>
+                                <select
+                                    name="filter"
+                                    onchange="this.form.submit()"
+                                    class="rounded-md border-gray-300 text-sm
+                                        focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option value="all" @selected($filter === 'all')>
+                                        Show all
+                                    </option>
+
+                                    <option value="today" @selected($filter === 'today')>
+                                        Today
+                                    </option>
+
+                                    <option value="this_week" @selected($filter === 'this_week')>
+                                        This Week
+                                    </option>
+
+                                    <option value="this_month" @selected($filter === 'this_month')>
+                                        This Month
+                                    </option>
+
+                                    <option value="last_month" @selected($filter === 'last_month')>
+                                        Last Month
+                                    </option>
+                                </select>
+
+                                @if ($shortUrls->count() > 0)
+                                <a
+                                    href="{{ route('short-urls.download', ['filter' => $filter]) }}"
+                                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium
+                                        rounded-md hover:bg-indigo-700"
+                                >
+                                    Download
+                                </a>
+                                @else
+                                    <a
+                                        href="javascript:void(0); alert('Nothing to download!')"
+                                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium
+                                            rounded-md "
+                                    >
+                                        Download
+                                    </a>
+                                @endif
+                            </form>
                         </div>
                     </div>
 
@@ -165,41 +238,78 @@
                                 </tr>
                             </thead>
 
-                            <tbody>
+                            <tbody class="divide-y divide-gray-200">
+                            @forelse ($shortUrls->take(config('pagination.dashboard_limit')) as $index => $shortUrl)
 
                                 <tr class="hover:bg-gray-50">
 
-                                    <td class="border-b border-gray-200 px-6 py-4 text-sm text-gray-700">
-                                        1
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        {{ $index + 1 }}
                                     </td>
 
-                                    <td class="border-b border-gray-200 px-6 py-4 text-sm">
-                                        <a href="#" class="text-indigo-600 hover:text-indigo-800">
-                                            /abc123
+                                    <td class="px-6 py-4 text-sm">
+                                        <a
+                                            href="{{ url('/s/'.$shortUrl->short_code) }}"
+                                            target="_blank"
+                                            class="text-indigo-600 hover:text-indigo-800 font-medium"
+                                        >
+                                            {{ url('/s/'.$shortUrl->short_code) }}
                                         </a>
                                     </td>
 
-                                    <td class="border-b border-gray-200 px-6 py-4 text-sm text-gray-700">
-                                        https://google.com
+                                    <td class="px-6 py-4 text-sm text-gray-700" title="{{ $shortUrl->original_url }}" >
+                                        {{ Str::limit($shortUrl->original_url, 40, '...') }}
                                     </td>
 
-                                    <td class="border-b border-gray-200 px-6 py-4 text-sm text-gray-700">
-                                        25
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        {{ $shortUrl->hits }}
                                     </td>
 
-                                    <td class="border-b border-gray-200 px-6 py-4 text-sm text-gray-700">
-                                        Super Admin
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        @if(auth()->user()->isSuperAdmin())
+                                            {{ $shortUrl->company->name }}
+                                        @else
+                                            {{ $shortUrl->creator->name }}
+                                        @endif
                                     </td>
 
-                                    <td class="border-b border-gray-200 px-6 py-4 text-sm text-gray-700">
-                                        26 Sep 2026
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        {{ $shortUrl->created_at->format('d M Y') }}
                                     </td>
 
                                 </tr>
 
+                            @empty
+
+                                <tr>
+                                    <td
+                                        colspan="6"
+                                        class="px-6 py-8 text-center text-sm text-gray-500"
+                                    >
+                                        No short URLs found.
+                                    </td>
+                                </tr>
+
+                            @endforelse
                             </tbody>
 
                         </table>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <p class="text-sm text-gray-500">
+                                Showing {{ min(config('pagination.dashboard_limit'), $shortUrls->count()) }}
+                                of {{ $shortUrls->count() }} URLs
+                            </p>
+
+                            @if ($shortUrls->count() > config('pagination.dashboard_limit'))
+                                <a
+                                    href="{{ route('short-urls.index') }}"
+                                    class="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                >
+                                    View All
+                                </a>
+                            @endif
+                        </div>
 
                     </div>
 
@@ -262,7 +372,7 @@
 
                             <tbody>
 
-                                @forelse ($teamMembers as $index => $member)
+                                @forelse ($teamMembers->take(config('pagination.dashboard_limit')) as $index => $member)
 
                                     <tr class="hover:bg-gray-50">
 
@@ -288,11 +398,11 @@
                                         </td>
 
                                         <td class="px-6 py-4 text-sm text-gray-700">
-                                            0
+                                            {{ $member->short_urls_count }}
                                         </td>
 
                                         <td class="px-6 py-4 text-sm text-gray-700">
-                                            0
+                                            {{ $member->short_urls_sum_hits ?? 0 }}
                                         </td>
 
                                     </tr>
@@ -309,10 +419,27 @@
                                     </tr>
 
                                 @endforelse
+                                
 
                             </tbody>
 
                         </table>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <p class="text-sm text-gray-500">
+                                Showing {{ min(config('pagination.dashboard_limit'), $teamMembers->count()) }}
+                                of {{ $teamMembers->count() }} members
+                            </p>
+
+                            @if ($teamMembers->count() > config('pagination.dashboard_limit'))
+                                <a
+                                    href="{{ route('members.index') }}"
+                                    class="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                >
+                                    View All
+                                </a>
+                            @endif
+                        </div>
 
                     </div>
 
