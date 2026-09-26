@@ -23,9 +23,19 @@ class InvitationController extends Controller
         );
 
         $msg = 'Invitation sent successfully.';
-        if(config('mail.default') === 'log'){
+
+        $mailConfigured = config('mail.default') === 'smtp' && !empty(config('mail.mailers.smtp.host'));
+
+        $msg = 'Invitation sent successfully.';
+
+        if (!$mailConfigured) {
             $url = route('invitations.accept', $invitation->token);
-            $msg = "Invitation sent successfully. ". '<a href="#" onclick="navigator.clipboard.writeText(\'' . $url . '\'); return false;" '. 'class="text-indigo-600 underline font-medium">'. 'Click to copy invitation URL'. '</a>';
+
+            $msg = 'Invitation created successfully. Email service is not configured. '
+                . '<a href="#" onclick="navigator.clipboard.writeText(\'' . $url . '\'); return false;" '
+                . 'class="text-indigo-600 underline font-medium">'
+                . 'Click to copy invitation URL'
+                . '</a>';
         }
 
         return back()->with('success', $msg);
@@ -33,6 +43,7 @@ class InvitationController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Invitation::class);
         return view('invitations.create');
     }
 
@@ -40,8 +51,11 @@ class InvitationController extends Controller
     {
         $invitation = Invitation::where('token', $token)
             ->whereNull('accepted_at')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
             ->firstOrFail();
-
         return view('invitations.accept', compact('invitation'));
     }
 }

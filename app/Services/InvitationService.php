@@ -27,13 +27,21 @@ class InvitationService
             $companyName
         ) {
             if ($inviter->isSuperAdmin()) {
-                // superadmin creating new company while inviting
-
                 $userExists = User::where('email', $email)->exists();
 
                 if ($userExists) {
                     throw ValidationException::withMessages([
                         'email' => 'This email is already registered.',
+                    ]);
+                }
+
+                $pendingInvitation = Invitation::where('email', $email)
+                    ->whereNull('accepted_at')
+                    ->exists();
+
+                if ($pendingInvitation) {
+                    throw ValidationException::withMessages([
+                        'email' => 'An invitation has already been sent to this email.',
                     ]);
                 }
 
@@ -43,7 +51,6 @@ class InvitationService
                 ]);
 
                 $companyId = $company->id;
-
             } else {
                 // admin creating invite but with existing company
 
@@ -82,7 +89,7 @@ class InvitationService
                 'expires_at' => now()->addDays(7),
             ]);
 
-            if (config('mail.default') === 'smtp' && config('mail.mailers.smtp.host')) {
+            if (config('mail.default') === 'smtp' && !empty(config('mail.mailers.smtp.host'))) {
                 $invitation->load('company');
                 Mail::to($invitation->email)->send(new InvitationMail($invitation));
             }

@@ -83,7 +83,7 @@ php artisan migrate --seed
 Default Superadmin Login Credentials
 
 Email: superadmin@example.com
-Password: 12345
+Password: 12345678
 ```
 ### 8. Build frontend assets
 

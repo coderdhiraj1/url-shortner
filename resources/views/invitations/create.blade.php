@@ -90,7 +90,7 @@
                 </form>
 
 
-                @if (config('mail.default') === 'log')
+                @if (config('mail.default') !== 'smtp' || empty(config('mail.mailers.smtp.host')))
                     <br>
                     <div class="mb-5 rounded-md bg-yellow-50 p-4">
                         <p class="text-sm font-medium text-yellow-800">

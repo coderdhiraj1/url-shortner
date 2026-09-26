@@ -31,7 +31,6 @@ class InvitationPolicy
      */
     public function create(User $user): bool
     {
-        return true;
         return in_array($user->role, [
             Role::SUPER_ADMIN,
             Role::ADMIN,
